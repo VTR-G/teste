@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Presentes - Chá de Bebê</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Poppins', Arial, sans-serif;
+      background: linear-gradient(to bottom right, #ffe4ec, #f8bbd0);
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: #e91e63;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    form {
+      background: #f8bbd0;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .input-group {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+
+    .presente {
+      margin: 10px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .presente button {
+      background-color: white;
+      border: 2px solid #e91e63;
+      color: #e91e63;
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-family: 'Poppins', Arial, sans-serif;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .presente button:hover {
+      background-color: #fce4ec;
+    }
+
+    .presente.selecionado button {
+      background-color: #e91e63;
+      color: white;
+      font-weight: bold;
+      transform: scale(1.05);
+    }
+
+    .presente.esgotado button {
+      background-color: #f3e5f5;
+      color: #999;
+      cursor: not-allowed;
+      opacity: 0.6;
+      border: 2px solid #ccc;
+    }
+
+    button#btnReservar {
+      background-color: #f8bbd0;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 8px;
+      cursor: not-allowed;
+      width: 100%;
+      font-size: 18px;
+      font-family: 'Poppins', Arial, sans-serif;
+      margin-top: 20px;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button#btnReservar.enabled {
+      background-color: #4caf50;
+      cursor: pointer;
+    }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 3px solid white;
+      border-top: 3px solid #4caf50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    button.loading .spinner {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #mensagemPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 30px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      background-color: white;
+      border: 2px solid #e91e63;
+      max-width: 80%;
+      width: 400px;
+      z-index: 10000;
+      display: none;
+    }
+
+    #mensagemPopup.sucesso {
+      color: #2e7d32;
+      background-color: #e8f5e9;
+    }
+
+    #mensagemPopup.erro {
+      color: #c62828;
+      background-color: #ffebee;
+    }
+
+    #btnSair {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    #btnSair:hover {
+      background-color: #388e3c;
+    }
+
+    /* Correção: símbolos caindo */
+    .falling {
+      position: absolute;
+      top: -50px;
+      font-size: 24px;
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(110vh);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🎁 Chá de Bebê da Valentina ❤️</h1>
+
+  <form id="formPresentes">
+    <div class="input-group">
+      <label for="nome">Seu Nome:</label>
+      <input type="text" id="nome" required>
+    </div>
+
+    <h3 style="text-align:center;">Escolha um presente:</h3>
+    <div id="listaPresentes">
+      <p style="text-align:center;">Carregando...</p>
+    </div>
+
+    <button type="submit" id="btnReservar" disabled>
+      Reservar
+      <span class="spinner"></span>
+    </button>
+  </form>
+
+  <div id="mensagemPopup">
+    <p id="mensagemTexto"></p>
+    <button id="btnSair" onclick="fecharMensagem()">Fechar</button>
+  </div>
+
+  <script>
+    for (let i = 0; i < 20; i++) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.style.left = `${Math.random() * 100}%`;
+      bubble.style.width = `${10 + Math.random() * 20}px`;
+      bubble.style.height = bubble.style.width;
+      bubble.style.animationDuration = `${8 + Math.random() * 5}s`;
+      document.body.appendChild(bubble);
+    }
+
+    const symbols = ["💖", "⭐", "🎀", "🍼"];
+    for (let i = 0; i < 15; i++) {
+      const symbol = document.createElement('div');
+      symbol.className = 'falling';
+      symbol.style.left = `${Math.random() * 100}%`;
+      symbol.style.animationDuration = `${5 + Math.random() * 5}s`;
+      symbol.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+      document.body.appendChild(symbol);
+    }
+
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwA_dHHxDi0pD0VSyFJPjz1UaNXjTAP9oQOq9bRuTq1twIFGTVrGugu1HY3tnBwMJC4XA/exec";
+    const PROXY_URL = "https://cors-anywhere.herokuapp.com/";
+
+    let selectedGift = null;
+
+    async function loadGifts() {
+      try {
+        const response = await fetch(`${PROXY_URL}${SCRIPT_URL}?opcao=listar`);
+        const data = await response.json();
+
+        if (data.success) {
+          displayGifts(data.data);
+        } else {
+          showMessage(data.message || "Erro ao carregar", "erro");
+        }
+      } catch (error) {
+        showMessage("Falha na conexão", "erro");
+        console.error(error);
+      }
+    }
+
+    function displayGifts(gifts) {
+      const container = document.getElementById("listaPresentes");
+      container.innerHTML = "";
+
+      gifts.forEach(gift => {
+        const div = document.createElement("div");
+        div.className = `presente ${gift.disponivel <= 0 ? 'esgotado' : ''}`;
+
+        div.innerHTML = `
+          <button type="button" class="btn-presente" ${gift.disponivel <= 0 ? 'disabled' : ''}>
+            ${gift.nome} (${gift.disponivel} disponíveis)
+          </button>
+        `;
+
+        const button = div.querySelector("button");
+
+        button.addEventListener("click", () => {
+          if (gift.disponivel > 0) {
+            const isAlreadySelected = div.classList.contains("selecionado");
+            document.querySelectorAll(".presente").forEach(b => b.classList.remove("selecionado"));
+
+            if (isAlreadySelected) {
+              selectedGift = null;
+              document.getElementById("btnReservar").disabled = true;
+              document.getElementById("btnReservar").classList.remove('enabled');
+            } else {
+              div.classList.add("selecionado");
+              selectedGift = gift.nome;
+              document.getElementById("btnReservar").disabled = false;
+              document.getElementById("btnReservar").classList.add('enabled');
+            }
+          }
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    async function sendReservation(name, gift) {
+      try {
+        const response = await fetch(`${PROXY_URL}${SCRIPT_URL}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: name, presente: gift })
+        });
+
+        return await response.json();
+      } catch (error) {
+        console.error("Erro ao enviar reserva:", error);
+        return { success: false, message: "Erro na reserva" };
+      }
+    }
+
+    function showMessage(text, type) {
+      const popup = document.getElementById("mensagemPopup");
+      const mensagemTexto = document.getElementById("mensagemTexto");
+
+      mensagemTexto.textContent = text;
+      popup.className = `show ${type}`;
+      popup.style.display = "block";
+    }
+
+    function fecharMensagem() {
+      const popup = document.getElementById("mensagemPopup");
+      popup.style.display = "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", loadGifts);
+    document.getElementById("formPresentes").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const name = document.getElementById("nome").value.trim();
+      const btn = document.getElementById("btnReservar");
+
+      if (!name || !selectedGift) {
+        showMessage("Preencha todos os campos", "erro");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.classList.add("loading");
+      btn.querySelector(".spinner").style.display = "inline-block";
+      btn.firstChild.textContent = "Reservando...";
+
+      const result = await sendReservation(name, selectedGift);
+
+      btn.classList.remove("loading");
+      btn.querySelector(".spinner").style.display = "none";
+      btn.firstChild.textContent = "Reservar";
+
+      if (result.success) {
+        showMessage("Reserva realizada com sucesso! Contamos com sua presença!", "sucesso");
+        document.getElementById("nome").value = "";
+        selectedGift = null;
+        btn.disabled = true;
+        btn.classList.remove('enabled');
+        loadGifts();
+      } else {
+        showMessage(result.message || "Erro ao reservar", "erro");
+        btn.disabled = false;
+        btn.classList.add('enabled');
+      }
+    });
+  </script>
+</body>
+</html>
